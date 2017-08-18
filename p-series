@@ -1,0 +1,136 @@
+<!DOCTYPE HTML>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <title>P-series Test for Convergence</title>
+    <script src="https://sagecell.sagemath.org/static/jquery.min.js"></script>
+    <script src="https://sagecell.sagemath.org/embedded_sagecell.js"></script>
+    <script>
+$(function () {
+    // Make *any* div with class 'compute' a Sage cell
+    sagecell.makeSagecell({inputLocation: 'div.compute',
+    						template:       sagecell.templates.minimal,
+                           evalButtonText: 'Launch the Interactive Applet Now'});
+});
+    </script>
+  </head>
+  <body style="width: 1000px;">
+
+  <h1>P-Series Test for Convergence</h1>
+
+<p>An Interactive Applet powered by Sage and MathJax.</p>
+<p>(By Kelsey Norman with HTML code from Prof. Gregory V. Bard)</p>
+
+<hr>
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+<script src="jquery.jslatex.js"></script>
+
+<script>
+$(function () {
+    $(".latex").latex();
+});
+</script>
+
+<div class="latex">
+    \textrm{This demo shows the convergence of a p-series of the form } \sum_{n=1}^\infty x^{p} \textrm{where } p \textrm{ is negative.}
+</div>
+
+<hr>
+
+<div class="compute">
+<script type="text/x-sage">
+
+@interact( layout=[ ['p', 'type'], ['n_min', 'n_max'] ])
+def p_series( n_min = input_box( default = 1, label = "$n_{min}$", width = 5 ), 
+        n_max = input_box( default = 20, label = "$n_{max}$", width = 5 ), 
+        p = input_box( default = -2, label = "$p$", width = 5 ), 
+        type = selector(['inscribed', 'circumscribed'], default = "inscribed", label = "sum type") ) :
+            
+    width = 1
+    num_rects = n_max - n_min
+    rectangles = polygon([(n_min, 0), (n_min, 10^-16), (n_min + 10^-16, 0)], aspect_ratio = "automatic")
+    f = x^p
+    f = f.function(x)
+    
+    if p >= 0 :
+        pretty_print( "Please enter a negative value for p." )
+        
+    else:
+        graph = plot( f, (n_min, n_max) )
+
+        for j in range(num_rects):
+            left = n_min + j * width
+            right = n_min + (j + 1) * width
+            if type == 'inscribed':
+                if f(left) < f(right):
+                    height = f(left)
+                else:
+                    height = f(right)
+            else:
+                if f(left) < f(right):
+                    height = f(right)
+                else:
+                    height = f(left)                        
+            rectangles += polygon([(left, 0), (left, height), (right, height), (right, 0)], color = "#60A70F", edgecolor = "#508810", aspect_ratio = "automatic")  
+    
+        left = n_min
+        right = n_min + 0.25
+        roots = [n_min]
+        while right <= n_max :
+            try:
+                root = find_root( f, left, right )
+                if root not in roots :
+                    roots.append(root)
+                left = root + 10^-12
+                right = left + 0.25
+            except:
+                right += 0.25
+        if n_max not in roots :
+            roots.append(n_max)
+        
+        for j in range(len(roots) - 1) :
+            left = roots[j]
+            right = roots[j+1]
+            mid = (left + right) / 2
+        if f(mid) > 0 :
+            graph += plot( f, (left, right), fill = True, fillcolor = "#dbf9b9" )
+        else :
+            graph += plot( f, (left, right), fill = True, fillcolor = "#ff9999" )
+    
+#        (area, prec) = numerical_integral( f, (n_min, n_max))
+#        l = 0
+#        while prec < 10^-l :
+#            l += 1
+
+        text2 = "This image is approximating the series " 
+        if type == "circumscribed":
+            start = n_min
+        else:
+            start = n_min + 1
+        for j in range(5):
+            text2 += str(start + j) + "^p + "
+        text2 += "..."
+
+        area = sum( f, x, n_min, oo )
+        if p < -1:
+            text1 = "convergent"
+            if type == "inscribed":
+                text1 += ".\nHowever, since the rectangles are inscribed, the test is inconclusive"
+        else:
+            text1 = "divergent"
+            if type == "circumscribed":
+                text1 += ".\nHowever, since the rectangles are circumscribed, the test is inconclusive"
+        pretty_print( text2 + "\nThe actual area is %6.7f." %area.n() + "\nBased on the value of p, the series is " + text1 + "." )
+    
+        graph += rectangles
+        graph.show()
+
+</script>
+</div>
+
+<hr>
+Last modified on August 18th, 2017.
+</body>
+</html>
